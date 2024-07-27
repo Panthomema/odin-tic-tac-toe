@@ -13,7 +13,6 @@ function createBoard(side) {
   ];
 
   function placeToken(player, position) {
-    console.log(state[position]);
     if (state[position] !== null) return false;
     state[position] = player.token;
     return true;
@@ -37,40 +36,41 @@ function createBoard(side) {
 }
 
 function createPlayer(name, token) {
-  return { name, token }
+  return { name, token };
 }
 
-const board = createBoard(3);
+function playGame() {
+  const board = createBoard(3);
 
-const player1 = createPlayer('Player1', 'X');
-const player2 = createPlayer('Player2', 'O');
+  const player1 = createPlayer("Player1", "X");
+  const player2 = createPlayer("Player2", "O");
 
-let actualPlayer = player2;
+  let actualPlayer = player2;
 
-while (true) {
-  actualPlayer = (actualPlayer === player2) ? player1 : player2;
+  while (true) {
+    actualPlayer = actualPlayer === player2 ? player1 : player2;
 
-  let position;
+    let position;
 
-  do {
-    position = prompt(`${actualPlayer.name} move:`);
-  } while (! board.placeToken(actualPlayer, position));
- 
-  if (board.checkWin(actualPlayer)) {
-    console.log(`${actualPlayer.name} wins!`);
-    break;
+    do {
+      position = prompt(`${actualPlayer.name} move:`);
+    } while (!board.placeToken(actualPlayer, position));
+
+    if (board.checkWin(actualPlayer)) {
+      console.log(`${actualPlayer.name} wins!`);
+      break;
+    }
+
+    if (board.checkDraw()) {
+      console.log("Draw");
+      break;
+    }
+
+    const state = board.getState();
+
+    console.log(state.slice(0, 3));
+    console.log(state.slice(3, 6));
+    console.log(state.slice(6));
+    console.log("---");
   }
-
-  if (board.checkDraw()) {
-    console.log('Draw');
-    break;
-  }
-
-  const state = board.getState();
-
-  console.log(state.slice(0, 3));
-  console.log(state.slice(3, 6));
-  console.log(state.slice(6));
-  console.log('---');
 }
-
