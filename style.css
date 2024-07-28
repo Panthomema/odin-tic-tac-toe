@@ -77,6 +77,8 @@
   --color-red: #C60001;
   --color-blue: #2864C6;
   --color-yellow: #FFC600;
+
+  --shadow: 0.025em 0.025em 0 #dddddd;
 }
 
 .red {
@@ -109,33 +111,38 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-around;
+
   background-color: var(--color-white);
-  background-image: 
-    linear-gradient(to bottom, transparent 95%, #d3d3d3 95%, #d3d3d3 100%),
-    linear-gradient(to right, var(--color-blue), var(--color-blue));
-  background-size: 100% 24px, 2px 100%;
-  background-position: left top, left 5% top;
-  background-repeat: repeat-y, no-repeat;
+  background-image:
+    linear-gradient(to right, #666666, #666666),
+    linear-gradient(to bottom, transparent 95%, #d3d3d3 95%, #d3d3d3 100%);
+  background-size: 2px 100%, 100% 24px;
+  background-position: left 5% top, left top;
+  background-repeat: no-repeat, repeat-y;
+
   text-align: center;
   font-family: val, sans-serif;
+  letter-spacing: 0.125em;
 }
 
 h1 {
   font-size: 3rem;
   font-weight: 500;
+  text-shadow: var(--shadow);
 }
 
 .control {
   display: flex;
   flex-direction: column;
   font-size: 1.25rem;
-  gap: 1.5em;
+  gap: 1.125em;
 }
 
 button {
   color: var(--color-white);
   padding: 0.25em 0.5em;
   border-radius: 50px;
+  box-shadow: var(--shadow);
   cursor: pointer;
   transition: transform 0.2s ease;
 }
