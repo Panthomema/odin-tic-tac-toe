@@ -8,10 +8,23 @@
   <script src="script.js" defer></script>
 </head>
 <body>
-  <h1><span class="blue">Tic</span> <span class="red">Tac</span><br><span class="yellow">Toe</span></h1>
-  <div class="control">
-    <button class="bg-blue">1 Player</button>
-    <button class="bg-red">2 Players</button>
+  <div id="info">
+    <h1><span class="blue">Tic</span> <span class="red">Tac</span><br><span class="yellow">Toe</span></h1>
+    <div class="control">
+      <button id="one-player" class="bg-blue clickable">1 Player</button>
+      <button id="two-players" class="bg-red clickable">2 Players</button>
+    </div>
+  </div>
+  <div id="board">
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
   </div>
 </body>
 </html>

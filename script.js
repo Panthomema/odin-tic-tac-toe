@@ -1,4 +1,6 @@
-function createBoard(side) {
+// Game logic & data
+
+function createGame(side) {
   const state = Array(side ** 2).fill(null);
 
   const winningCombinations = [
@@ -35,42 +37,107 @@ function createBoard(side) {
   return { placeToken, checkWin, checkDraw, getState };
 }
 
+//  Players data
+
 function createPlayer(name, token) {
   return { name, token };
 }
 
-function playGame() {
-  const board = createBoard(3);
+function createUIHandler() {
+  const info = document.querySelector('#info');
+  const board = document.querySelector('#board');
+}
 
-  const player1 = createPlayer("Player1", "X");
-  const player2 = createPlayer("Player2", "O");
+function createBoardHandler(game) {
+  function updateState() {
 
-  let actualPlayer = player2;
-
-  while (true) {
-    actualPlayer = actualPlayer === player2 ? player1 : player2;
-
-    let position;
-
-    do {
-      position = prompt(`${actualPlayer.name} move:`);
-    } while (!board.placeToken(actualPlayer, position));
-
-    if (board.checkWin(actualPlayer)) {
-      console.log(`${actualPlayer.name} wins!`);
-      break;
-    }
-
-    if (board.checkDraw()) {
-      console.log("Draw");
-      break;
-    }
-
-    const state = board.getState();
-
-    console.log(state.slice(0, 3));
-    console.log(state.slice(3, 6));
-    console.log(state.slice(6));
-    console.log("---");
   }
 }
+
+function swapContent(oldContent, newContent) {
+  newContent.classList.remove('fade-out');
+  oldContent.classList.remove('fade-in');
+  oldContent.classList.add('fade-out');
+
+  oldContent.addEventListener('animationend', () => {
+    oldContent.style.display = 'none';
+    newContent.style.display = 'grid';
+    newContent.classList.add('fade-in');
+  }, { once: true });
+}
+
+document.querySelector('#two-players').addEventListener('click', () => {
+  // Animation - swap content
+  
+  const info = document.querySelector('#info');
+  const board = document.querySelector('#board');
+
+  swapContent(info, board);
+
+  // Init variables - 1 time per game
+
+  const game = createGame(3);
+
+  const player1 = createPlayer("Player 1", "X");
+  const player2 = createPlayer("Player 2", "O");
+
+  let actualPlayer = player1;
+
+  // Add listeners to every board element - 1 time per game
+
+  [...board.children].forEach((cell, position, cells) => {
+    cell.classList.add('clickable');
+
+    cell.addEventListener('click', () => {
+      game.placeToken(actualPlayer, position);
+      cell.classList.remove('clickable');
+
+      // display game state on board
+
+      const state = game.getState();
+      cells.forEach((cell, index) => {
+        cell.textContent = state[index];
+        cell.style.color = state[index] === 'X' ? 'var(--color-red)' : 'var(--color-blue)';
+      });
+
+      if (game.checkWin(actualPlayer)) {
+        // Update info content - on win
+
+        info.querySelector('h1').innerHTML = 
+          `<span class="${
+            (actualPlayer.token === 'X') ? 'red' : 'blue'
+          }">${actualPlayer.name}</span> <span class="yellow">wins!`;
+        info.querySelector('#two-players').textContent = 'Play again';
+
+        // Animation - swap content
+
+        swapContent(board, info);
+
+        // exit execution environment
+
+        return;
+      }
+  
+      if (game.checkDraw()) {
+        // Update info content - on draw
+
+        info.querySelector('h1').innerHTML = '<span class="blue">Draw!</span>';
+        info.querySelector('#two-players').textContent = 'Play again';
+
+        // Animation - swap content
+
+        swapContent(board, info);
+
+        // exit execution environment
+
+        return;
+      }
+
+      // change turn
+
+      actualPlayer = (actualPlayer === player1) ? player2 : player1;
+
+    }, { once: true });
+  });
+});
+
