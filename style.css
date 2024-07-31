@@ -82,15 +82,15 @@
   --border: 0.075em solid #333333;
 }
 
-.red {
+.text-red {
   color: var(--color-red);
 }
 
-.blue {
+.text-blue {
   color: var(--color-blue);
 }
 
-.yellow {
+.text-yellow {
   color: var(--color-yellow);
 }
 
@@ -112,6 +112,14 @@
 
 .fade-in {
   animation: fadeIn 0.6s forwards;
+}
+
+.display-grid {
+  display: grid;
+}
+
+.display-none {
+  display: none !important;
 }
 
 @keyframes fadeOut {
@@ -156,9 +164,8 @@ body > * {
   transition: opacity 4s ease;
 }
 
-#info {
+#menu {
   height: 100%;
-  display: grid;
   align-content: space-around;
   justify-items: center;
 }
@@ -196,7 +203,6 @@ button:active {
 #board {
   width: 80vmin;
   aspect-ratio: 1/1;
-  display: none;
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
   transform: skew(-2deg, -1deg);
   font-size: 3rem;

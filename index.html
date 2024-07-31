@@ -1,30 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic Tac Toe</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
-</head>
-<body>
-  <div id="info">
-    <h1><span class="blue">Tic</span> <span class="red">Tac</span><br><span class="yellow">Toe</span></h1>
-    <div class="control">
-      <button id="one-player" class="bg-blue clickable">1 Player</button>
-      <button id="two-players" class="bg-red clickable">2 Players</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div id="menu" class="display-grid">
+      <h1>
+        <span class="text-blue">Tic</span> <span class="text-red">Tac</span
+        ><br /><span class="text-yellow">Toe</span>
+      </h1>
+      <div class="control">
+        <button id="one-player" class="bg-blue clickable">1 Player</button>
+        <button id="two-players" class="bg-red clickable">2 Players</button>
+      </div>
     </div>
-  </div>
-  <div id="board">
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-  </div>
-</body>
+    <div id="board" class="display-grid display-none">
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+    </div>
+  </body>
 </html>
