@@ -110,6 +110,10 @@
   animation: fadeOut 0.6s forwards;
 }
 
+.animation-delay {
+  animation-delay: 0.6s;
+}
+
 .fade-in {
   animation: fadeIn 0.6s forwards;
 }

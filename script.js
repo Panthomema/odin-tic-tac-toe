@@ -1,5 +1,5 @@
 const menu = (function () {
-  const element = document.querySelector('#menu');
+  const element = document.querySelector("#menu");
 
   function updateContent(titleContent, buttonContent) {
     element.querySelector("h1").innerHTML = titleContent;
@@ -10,35 +10,46 @@ const menu = (function () {
 })();
 
 const board = (function () {
-  const element = document.querySelector('#board');
+  const element = document.querySelector("#board");
+  const tokenColorClasses = {
+    X: "text-red",
+    O: "text-blue",
+  };
 
   function update(state) {
     [...element.children].forEach((cell, index) => {
       if (state[index]) {
         cell.textContent = state[index];
-        cell.classList.add(state[index] === "X" ? "text-red" : "text-blue");
+        cell.classList.add(tokenColorClasses[state[index]]);
       }
     });
   }
 
   function reset() {
     [...element.children].forEach((cell) => {
-      cell.classList.remove('text-red', 'text-blue');
-      cell.classList.add('clickable');
-      cell.textContent = '';
+      cell.classList.remove("text-red", "text-blue");
+      cell.classList.add("clickable");
+      cell.textContent = "";
+    });
+  }
+
+  function lock() {
+    [...element.children].forEach((cell) => {
       cell.replaceWith(cell.cloneNode(true));
     });
   }
 
-  return { element, update, reset };
+  return { element, update, reset, lock };
 })();
 
 const uiHandler = (function () {
-  function swapContent(oldContent, newContent) {
-    newContent.classList.remove("fade-out");
-    oldContent.classList.remove("fade-in");
+  function swapContent(oldContent, newContent, delayedExit = null) {
+    newContent.classList.remove("fade-out", "animation-delay");
+    oldContent.classList.remove("fade-in", "animation-delay");
+
+    if (delayedExit) oldContent.classList.add("animation-delay");
     oldContent.classList.add("fade-out");
-  
+
     oldContent.addEventListener(
       "animationend",
       () => {
@@ -50,85 +61,134 @@ const uiHandler = (function () {
     );
   }
 
-  return { swapContent }
+  return { swapContent };
 })();
 
-
-document.querySelector("#two-players").addEventListener("click", () => {
+document.querySelector("#one-player").addEventListener("click", (event) => {
   board.reset();
-  // Animation - swap content
   uiHandler.swapContent(menu.element, board.element);
-
-  // Init variables - 1 time per game
 
   const gameData = createGameData();
 
-  const player1 = createPlayer("Player 1", "X");
-  const player2 = createPlayer("Player 2", "O");
+  const playerX = createPlayer("X");
+  const playerO = createPlayer("O");
 
-  let actualPlayer = player1;
+  const button = event.currentTarget;
 
-  // Add listeners to every board element - 1 time per game
+  const [humanPlayer, aiPlayer] =
+    button.dataset.played % 2 === 0
+      ? [playerX, createAi(playerO)]
+      : [playerO, createAi(playerX)];
+
+  if (aiPlayer.token === playerX.token) {
+    const aiMove = aiPlayer.selectMove(gameData, humanPlayer.token);
+    console.log(aiMove);
+
+    gameData.placeToken(aiPlayer.token, aiMove);
+    board.update(gameData.getState());
+  }
 
   [...board.element.children].forEach((cell, position) => {
-
     cell.addEventListener(
-      'click',
+      "click",
       () => {
-        gameData.placeToken(actualPlayer, position);
+        gameData.placeToken(humanPlayer.token, position);
         cell.classList.remove("clickable");
-
-        // display game state on board
 
         board.update(gameData.getState());
 
-        if (gameData.checkWin(actualPlayer)) {
-          // Update menu content - on win
-
+        if (gameData.checkWin(humanPlayer.token)) {
           menu.updateContent(
             `<span class="${
-              actualPlayer.token === 'X' ? 'text-red' : 'text-blue'
-            }">${actualPlayer.name}</span> <span class="text-yellow">wins!`,
-            'Play again'
+              humanPlayer.token === "X" ? "text-red" : "text-blue"
+            }">${humanPlayer.token}</span> <span class="text-yellow">wins!`,
+            "Play again"
           );
 
-          // Animation - swap content
+          board.lock();
+          button.dataset.played = Number(button.dataset.played) + 1;
 
-          uiHandler.swapContent(board.element, menu.element);
-
-          // exit execution environment
-
+          uiHandler.swapContent(board.element, menu.element, true);
           return;
         }
 
         if (gameData.checkDraw()) {
-          // Update info content - on draw
-
           menu.updateContent(
-            '<span class="text-blue">Draw!</span>',
-            'Play again'
+            '<span class="text-yellow">Draw!</span>',
+            "Play again"
           );
 
-          // Animation - swap content
+          button.dataset.played = button.dataset.played + 1;
 
-          uiHandler.swapContent(board.element, menu.element);
-
-          // exit execution environment
-
+          uiHandler.swapContent(board.element, menu.element, true);
           return;
         }
 
-        // change turn
+        //make ai move
 
-        actualPlayer = actualPlayer === player1 ? player2 : player1;
+        const aiMove = aiPlayer.selectMove(gameData, humanPlayer.token);
+
+        console.log(aiMove);
+
+        gameData.placeToken(aiPlayer.token, aiMove);
+        board.update(gameData.getState());
       },
       { once: true }
     );
   });
 });
 
+document.querySelector("#two-players").addEventListener("click", () => {
+  board.reset();
+  uiHandler.swapContent(menu.element, board.element);
 
-// Game Data
+  const gameData = createGameData();
+
+  const playerX = createPlayer("X");
+  const playerO = createPlayer("O");
+
+  let actualPlayer = playerX;
+
+  [...board.element.children].forEach((cell, position) => {
+    cell.addEventListener(
+      "click",
+      () => {
+        gameData.placeToken(actualPlayer.token, position);
+
+        cell.classList.remove("clickable");
+
+        board.update(gameData.getState());
+
+        if (gameData.checkWin(actualPlayer.token)) {
+          menu.updateContent(
+            `<span class="${
+              actualPlayer.token === "X" ? "text-red" : "text-blue"
+            }">${actualPlayer.token}</span> <span class="text-yellow">wins!`,
+            "Play again"
+          );
+
+          board.lock();
+
+          uiHandler.swapContent(board.element, menu.element, true);
+          return;
+        }
+
+        if (gameData.checkDraw()) {
+          menu.updateContent(
+            '<span class="text-yellow">Draw!</span>',
+            "Play again"
+          );
+
+          uiHandler.swapContent(board.element, menu.element, true);
+          return;
+        }
+
+        actualPlayer = actualPlayer === playerX ? playerO : playerX;
+      },
+      { once: true }
+    );
+  });
+});
 
 function createGameData() {
   const state = Array(9).fill(null);
@@ -144,32 +204,130 @@ function createGameData() {
     [2, 4, 6],
   ];
 
-  function placeToken(player, position) {
-    state[position] = player.token;
+  function placeToken(token, position) {
+    state[position] = token;
   }
 
-  function checkWin(player) {
+  function removeToken(position) {
+    state[position] = null;
+  }
+
+  function checkWin(token) {
     return winningCombinations.some((combination) =>
-      combination.every((position) => state[position] === player.token)
+      combination.every((position) => state[position] === token)
     );
   }
 
   function checkDraw() {
-    return state.every((position) => position);
+    return !state.includes(null);
+  }
+
+  function evaluate(token, opponentToken) {
+    if (checkWin(token)) return +10;
+    if (checkWin(opponentToken)) return -10;
+    if (checkDraw()) return 0;
+    return null;
   }
 
   function getState() {
     return state;
   }
 
-  return { placeToken, checkWin, checkDraw, getState };
+  return { placeToken, removeToken, checkWin, checkDraw, evaluate, getState };
 }
 
 //  Players data
 
-function createPlayer(name, token) {
-  return { name, token };
+function createPlayer(token) {
+  return { token };
 }
 
+function createAi(player) {
+  const { token } = player;
 
+  function getEmptyCells(gameState) {
+    return gameState
+      .map((cell, index) => (cell === null ? index : null))
+      .filter((index) => index !== null);
+  }
 
+  function selectMove(gameData, opponentToken) {
+    let bestScore = -Infinity;
+    let move = null;
+
+    getEmptyCells(gameData.getState()).forEach((cell) => {
+      gameData.placeToken(token, cell);
+      const score = minimax(gameData, 0, opponentToken);
+      if (score > bestScore) {
+        bestScore = score;
+        move = cell;
+      }
+      gameData.removeToken(cell);
+    });
+
+    return move;
+  }
+
+  function minimax(gameData, depth, opponentToken, isMaximizing = false) {
+    const score = gameData.evaluate(token, opponentToken);
+
+    if (score !== null) return score;
+
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+
+      getEmptyCells(gameData.getState()).forEach((cell) => {
+        gameData.placeToken(token, cell);
+        const score = minimax(gameData, depth + 1, opponentToken, false);
+        bestScore = Math.max(score, bestScore);
+        gameData.removeToken(cell);
+      });
+
+      return bestScore;
+    } else {
+      let bestScore = Infinity;
+
+      getEmptyCells(gameData.getState()).forEach((cell) => {
+        gameData.placeToken(opponentToken, cell);
+        const score = minimax(gameData, depth + 1, opponentToken, true);
+        bestScore = Math.min(score, bestScore);
+        gameData.removeToken(cell);
+      });
+
+      return bestScore;
+    }
+  }
+
+  /*
+  function minimax(gameData, depth, opponentToken, isMaximizing = true) {
+    const data = { ...gameData };
+    const score = data.evaluate(token, opponentToken);
+
+    let bestMove = { score: score, position: null };
+
+    if (depth === 0 || score !== null) return bestMove;
+
+    getEmptyCells(data.getState()).forEach((cell) => {
+      data.placeToken(token, cell);
+      bestMove.position = cell;
+      const move = minimax(gameData, depth - 1, opponentToken, !isMaximizing);
+
+      if (isMaximizing) {
+        if (move.score > bestMove.score || bestMove.score === null) {
+          bestMove = move;
+        }
+      } else {
+        if (move.score < bestMove.score || bestMove.score === null) {
+          bestMove = move;
+        }
+      }
+
+      data.removeToken(cell);
+    });
+
+    return bestMove;
+  }
+  */
+
+  return { token, selectMove };
+}
