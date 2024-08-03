@@ -126,6 +126,10 @@
   display: none !important;
 }
 
+.pointer-events-disabled {
+  pointer-events: none;
+}
+
 @keyframes fadeOut {
   to {
     opacity: 0;

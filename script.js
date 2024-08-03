@@ -12,7 +12,7 @@ const menu = (function () {
 
 const board = (function () {
   const element = document.querySelector("#board");
-  const tokenColorClasses = {
+  const colorClasses = {
     X: "text-red",
     O: "text-blue",
   };
@@ -21,8 +21,9 @@ const board = (function () {
     [...element.children].forEach((cell, index) => {
       if (state[index] && cell.textContent === "") {
         cell.classList.remove("clickable");
-        cell.classList.add(tokenColorClasses[state[index]]);
+        cell.classList.add(colorClasses[state[index]]);
         cell.textContent = state[index];
+        console.log(`cell ${index} filled`);
         cell.replaceWith(cell.cloneNode(true));
       }
     });
@@ -30,22 +31,33 @@ const board = (function () {
 
   function reset() {
     [...element.children].forEach((cell) => {
-      cell.classList.remove("text-red", "text-blue");
+      cell.classList.remove(...Object.values(colorClasses));
       cell.classList.add("clickable");
       cell.textContent = "";
     });
   }
 
-  function lock() {
+  function removeListeners() {
     [...element.children].forEach((cell) => {
       cell.replaceWith(cell.cloneNode(true));
     });
   }
 
-  return { element, update, reset, lock };
+  function togglePointerEvents() {
+    element.classList.toggle("pointer-events-disabled");
+  }
+
+  return {
+    element,
+    colorClasses,
+    update,
+    reset,
+    removeListeners,
+    togglePointerEvents,
+  };
 })();
 
-const uiHandler = (function () {
+const uiHandler = (function (menu, board) {
   function swapContent(oldContent, newContent, delayedExit = null) {
     newContent.classList.remove("fade-out", "animation-delay");
     oldContent.classList.remove("fade-in", "animation-delay");
@@ -64,12 +76,45 @@ const uiHandler = (function () {
     );
   }
 
-  return { swapContent };
-})();
+  function showBoard() {
+    board.reset();
+    swapContent(menu.element, board.element);
+  }
+
+  function showWin(winnerToken, isAiGame) {
+    const [firstButton, secondButton] = isAiGame
+      ? ["Play again", "2 Players"]
+      : ["1 Player", "Play again"];
+    menu.updateContent(
+      `<span class="${board.colorClasses[winnerToken]}">${winnerToken}</span>` +
+        ` <span class="text-yellow">wins!`,
+      firstButton,
+      secondButton
+    );
+
+    board.removeListeners();
+
+    swapContent(board.element, menu.element, true);
+  }
+
+  function showDraw(isAiGame) {
+    const [firstButton, secondButton] = isAiGame
+      ? ["Play again", "2 Players"]
+      : ["1 Player", "Play again"];
+    menu.updateContent(
+      '<span class="text-yellow">Draw!</span>',
+      firstButton,
+      secondButton
+    );
+
+    swapContent(board.element, menu.element, true);
+  }
+
+  return { showBoard, showWin, showDraw };
+})(menu, board);
 
 document.querySelector("#one-player").addEventListener("click", (event) => {
-  board.reset();
-  uiHandler.swapContent(menu.element, board.element);
+  uiHandler.showBoard();
 
   const gameData = createGameData();
 
@@ -83,13 +128,6 @@ document.querySelector("#one-player").addEventListener("click", (event) => {
       ? [playerX, createAi(playerO)]
       : [playerO, createAi(playerX)];
 
-  if (aiPlayer.token === playerX.token) {
-    const aiMove = aiPlayer.selectMove(gameData, humanPlayer.token);
-
-    gameData.placeToken(aiPlayer.token, aiMove);
-    board.update(gameData.getState());
-  }
-
   [...board.element.children].forEach((cell, position) => {
     cell.addEventListener(
       "click",
@@ -99,81 +137,53 @@ document.querySelector("#one-player").addEventListener("click", (event) => {
         board.update(gameData.getState());
 
         if (gameData.checkWin(humanPlayer.token)) {
-          menu.updateContent(
-            `<span class="${
-              humanPlayer.token === "X" ? "text-red" : "text-blue"
-            }">${humanPlayer.token}</span> <span class="text-yellow">wins!`,
-            "Play again",
-            "2 Players"
-          );
-
-          board.lock();
           button.dataset.played = Number(button.dataset.played) + 1;
-
-          uiHandler.swapContent(board.element, menu.element, true);
+          uiHandler.showWin(humanPlayer.token, true);
           return;
         }
 
         if (gameData.checkDraw()) {
-          menu.updateContent(
-            '<span class="text-yellow">Draw!</span>',
-            "Play again",
-            "2 Players"
-          );
-
           button.dataset.played = Number(button.dataset.played) + 1;
-
-          uiHandler.swapContent(board.element, menu.element, true);
+          uiHandler.showDraw(true);
           return;
         }
 
-        //make ai move
+        board.togglePointerEvents();
 
         const aiMove = aiPlayer.selectMove(gameData, humanPlayer.token);
-
         gameData.placeToken(aiPlayer.token, aiMove);
-        board.update(gameData.getState());
 
-        if (gameData.checkWin(aiPlayer.token)) {
-          menu.updateContent(
-            `<span class="${
-              aiPlayer.token === "X" ? "text-red" : "text-blue"
-            }">${aiPlayer.token}</span> <span class="text-yellow">wins!`,
-            "Play again",
-            "2 Players"
-          );
+        setTimeout(() => {
+          board.update(gameData.getState());
+          board.togglePointerEvents();
 
-          board.lock();
-          button.dataset.played = Number(button.dataset.played) + 1;
+          if (gameData.checkWin(aiPlayer.token)) {
+            button.dataset.played = Number(button.dataset.played) + 1;
+            uiHandler.showWin(aiPlayer.token, true);
+            return;
+          }
 
-          uiHandler.swapContent(board.element, menu.element, true);
-          return;
-        }
-
-        if (gameData.checkDraw()) {
-          menu.updateContent(
-            '<span class="text-yellow">Draw!</span>',
-            "Play again",
-            "2 Players"
-          );
-
-
-
-          button.dataset.played = Number(button.dataset.played) + 1;
-
-          uiHandler.swapContent(board.element, menu.element, true);
-          return;
-        }
-
+          if (gameData.checkDraw()) {
+            button.dataset.played = Number(button.dataset.played) + 1;
+            uiHandler.showDraw(true);
+            return;
+          }
+        }, 400);
       },
       { once: true }
     );
   });
+
+  if (aiPlayer.token === playerX.token) {
+    const aiMove = aiPlayer.selectMove(gameData, humanPlayer.token);
+
+    gameData.placeToken(aiPlayer.token, aiMove);
+    board.update(gameData.getState());
+  }
 });
 
 document.querySelector("#two-players").addEventListener("click", () => {
-  board.reset();
-  uiHandler.swapContent(menu.element, board.element);
+  uiHandler.showBoard();
 
   const gameData = createGameData();
 
@@ -187,32 +197,15 @@ document.querySelector("#two-players").addEventListener("click", () => {
       "click",
       () => {
         gameData.placeToken(actualPlayer.token, position);
-
         board.update(gameData.getState());
 
         if (gameData.checkWin(actualPlayer.token)) {
-          menu.updateContent(
-            `<span class="${
-              actualPlayer.token === "X" ? "text-red" : "text-blue"
-            }">${actualPlayer.token}</span> <span class="text-yellow">wins!`,
-            "1 Player",
-            "Play again"
-          );
-
-          board.lock();
-
-          uiHandler.swapContent(board.element, menu.element, true);
+          uiHandler.showWin(actualPlayer.token, false);
           return;
         }
 
         if (gameData.checkDraw()) {
-          menu.updateContent(
-            '<span class="text-yellow">Draw!</span>',
-            "1 Player",
-            "Play again"
-          );
-
-          uiHandler.swapContent(board.element, menu.element, true);
+          uiHandler.showDraw(false);
           return;
         }
 
@@ -285,7 +278,7 @@ function createAi(player) {
   }
 
   function selectMove(gameData, opponentToken) {
-    const data = {...gameData};
+    const data = { ...gameData };
     let bestScore = -Infinity;
     let move = null;
 
@@ -303,7 +296,7 @@ function createAi(player) {
   }
 
   function minimax(gameData, depth, opponentToken, isMaximizing = false) {
-    const data = {...gameData};
+    const data = { ...gameData };
     const score = data.evaluate(token, opponentToken);
 
     if (score !== null || depth === 1) return score;
