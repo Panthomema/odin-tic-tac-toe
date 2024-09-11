@@ -262,8 +262,6 @@ function createGameData() {
   return { placeToken, removeToken, checkWin, checkDraw, evaluate, getState };
 }
 
-//  Players data
-
 function createPlayer(token) {
   return { token };
 }
@@ -284,7 +282,7 @@ function createAi(player) {
 
     getEmptyCells(data.getState()).forEach((cell) => {
       data.placeToken(token, cell);
-      const score = minimax(data, 0, opponentToken);
+      const score = minimax(data, 4, opponentToken);
       if (score > bestScore) {
         bestScore = score;
         move = cell;
@@ -299,14 +297,14 @@ function createAi(player) {
     const data = { ...gameData };
     const score = data.evaluate(token, opponentToken);
 
-    if (score !== null || depth === 1) return score;
+    if (score !== null || depth === 0) return score;
 
     if (isMaximizing) {
       let bestScore = -Infinity;
 
       getEmptyCells(data.getState()).forEach((cell) => {
         data.placeToken(token, cell);
-        const score = minimax(data, depth + 1, opponentToken, false);
+        const score = minimax(data, depth - 1, opponentToken, false);
         bestScore = Math.max(score, bestScore);
         data.removeToken(cell);
       });
@@ -317,7 +315,7 @@ function createAi(player) {
 
       getEmptyCells(data.getState()).forEach((cell) => {
         data.placeToken(opponentToken, cell);
-        const score = minimax(data, depth + 1, opponentToken, true);
+        const score = minimax(data, depth - 1, opponentToken, true);
         bestScore = Math.min(score, bestScore);
         data.removeToken(cell);
       });
